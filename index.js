@@ -9,9 +9,9 @@ var deepmerge = require('deepmerge');
 var path = require('path');
 var toFoamtree = require('./lib/to-foamtree');
 
-var foamtreePath = '/assets/foamtree/';
+var ASSETS_PATH = '/assets/foamtree/';
 // Trees that are going to be inspected
-var treeConf = {
+var TREE_CONF = {
   js: {
     globs: ['*/!(templates)/!(template).js'],
     label: 'app.js',
@@ -28,6 +28,7 @@ var treeConf = {
     foamtree: []
   }
 };
+var TREE_CACHE = {};
 
 module.exports = {
   name: 'ember-cli-foamtree',
@@ -36,8 +37,7 @@ module.exports = {
     var options = baseConfig.foamtree || {};
 
     var defaultOptions = {
-      enabled: env !== 'production',
-      outputPath: 'dist/'
+      enabled: env !== 'production'
     }
 
     for (var option in defaultOptions) {
@@ -55,46 +55,68 @@ module.exports = {
 
   treeForPublic: function(tree) {
     debug('creating public tree');
+    // Do not watch this tree because of reasons (a fs.writeFile
+    // in the output directory will run a lot of rebuilds)
     return new UnwatchedTree('public');
   },
 
+  /*
+   * Wraps broccoli tree to read all it's files
+   */
   _readTree: function(type, dir) {
-    var config = treeConf[type];
+    // Get tree config from constant object
+    var config = TREE_CONF[type];
 
     debug('reading', type, 'tree from', dir);
-
+    // Do nothing if no config is available
     if (config) {
+      // Read all files in this tree
       var files = walkSync.entries(dir, { globs: config.globs });
-      var foamtree = toFoamtree(config.output, files);
+      // Make the nested object tree based in the "carrot foamtree" plugin input
+      var foamtree = toFoamtree(config.label, files);
       debug('number of files', files.length);
       //debug(JSON.stringify(foamtree));
-
+      // Persist the data somewhere, if the foamtree exist then deepmerge
+      // all the tree, else just assign it
+      if (TREE_CACHE[config.label]) {
+        debug('merging foamtree', config.label);
+        // We only want to persist the "groups" property, the files tree
+        TREE_CACHE[config.label] = deepmerge(TREE_CACHE[config.label], foamtree);
+      } else {
+        debug('creating foamtree', config.label);
+        TREE_CACHE[config.label] = foamtree;
+      }
       config.foamtree = foamtree;
     }
-
+    // Broccoli must know the current tree directory, simply return it
     return dir;
   },
 
   preprocessTree: function(type, tree) {
+    // Do nothing if addon is diabled
     if (!this.foamtreeOptions.enabled) {
       return tree;
     }
 
     debug('preprocessing', type, 'tree');
-
+    // Bind arguments to pass it as a promise callback
     var _readTree = this._readTree.bind(this, type);
-
+    // Wrap broccoli tree
     return {
+      // Broccoli main function to override
       read: function(readTree) {
+        // Process tree files
         return readTree(tree)
+        // Custom function to cache all tree files
         .then(_readTree)
+        // Log errors
         .catch(function(err) {
           debug('ERROR', err);
           console.log(err);
           throw err;
         });
       },
-
+      // Do nothing :)
       cleanup: function() {}
     };
   },
@@ -106,44 +128,21 @@ module.exports = {
   },
 
   outputReady: function(result) {
+    // Do nothing if addon is diabled
     if (!this.foamtreeOptions.enabled) {
       return;
     }
 
-    debug('output ready', result.directory);
-    var confs = Object.keys(treeConf);
-    debug('mapping trees', confs);
-    var confArray = confs.map(function(key) {
-      return {
-        label: treeConf[key].label,
-        groups: treeConf[key].foamtree.groups || []
-      };
+    // Transform cache object to array
+    var output = Object.keys(TREE_CACHE).map(function(key) {
+      return TREE_CACHE[key];
     });
-    // Merge by same output file
-    debug('merging output files');
-    var output = {};
-    confArray.forEach(function(conf) {
-      if (output[conf.label]) {
-        // Merge foamtree
-        debug('merging foamtree', conf.label);
-        output[conf.label] = deepmerge(output[conf.label], conf);
-      } else {
-        debug('creating new foamtree', conf.label);
-        output[conf.label] = conf;
-      }
-    });
-    // To array
-    output = Object.keys(output).map(function(key) {
-      return output[key]
-    });
-    var outputPath = path.join(result.directory, foamtreePath, 'data.js');
-    debug('public assets path', outputPath);
-    var outputJson = 'data = JSON.parse(\'' + JSON.stringify(output) + '\')';
-    //var indexFunnel = new Funnel('public', { include: ['foamtree.html'] });
+    // Construct output assets path
+    var outputPath = path.join(result.directory, ASSETS_PATH, 'data.js');
+    // Declare global variable with the foamtree to import in the HTML file
+    var outputJson = 'window.data = JSON.parse(\'' + JSON.stringify(output) + '\')';
 
-    // console.log(outputJson);
-    // console.log(this.app.project.root);
-    // console.log(Object.keys(this.app.project));
+    debug('public assets path', outputPath);
     debug('writing output file');
     fs.writeFile(outputPath, outputJson);
   }
