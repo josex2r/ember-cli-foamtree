@@ -54,10 +54,12 @@ module.exports = {
   },
 
   treeForPublic: function(tree) {
-    debug('creating public tree');
+    var dirname = __dirname || path.resolve(path.dirname());
+    dirname = path.join(dirname, 'public');
+    debug('creating public tree', dirname);
     // Do not watch this tree because of reasons (a fs.writeFile
     // in the output directory will run a lot of rebuilds)
-    return new UnwatchedTree('public');
+    return new UnwatchedTree(dirname);
   },
 
   /*
