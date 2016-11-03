@@ -15,7 +15,9 @@ window.addEventListener('load', function () {
     fadeDuration: 0,
     zoomMouseWheelDuration: 300,
     openCloseDuration: 200,
-    dataObject: window.foamtree,
+    dataObject: {
+      groups: window.data
+    },
 
     titleBarDecorator: function (opts, props, vars) {
       vars.titleBarShown = false;
@@ -36,7 +38,7 @@ window.addEventListener('load', function () {
         Tooltip.show(
           '<b>' + group.label + '</b><br>' +
           (group.parsedSize === undefined ? '' : '<br>Parsed size: <b>' + filesize(group.parsedSize) + '</b>') +
-          '<br>Stat size: <b>' + filesize(group.statSize) + '</b>' +
+          '<br>Stat size: <b>' + group.weight + '</b>' +
           (group.path ? '<br>Path: <b>' + group.path + '</b>' : '')
         );
       } else {

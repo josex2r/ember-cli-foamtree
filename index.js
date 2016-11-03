@@ -1,25 +1,31 @@
 /* jshint node: true */
 'use strict';
 
+var debug = require('debug')('foamtree');
 var fs = require('fs');
 var walkSync = require('walk-sync');
-var Funnel = require('broccoli-funnel');
-var mergeTrees = require('broccoli-merge-trees');
-var unionBy = require('lodash.unionby');
+var UnwatchedTree = require('broccoli-unwatched-tree');
+var deepmerge = require('deepmerge');
 var path = require('path');
 var toFoamtree = require('./lib/to-foamtree');
 
 var foamtreePath = '/assets/foamtree/';
+// Trees that are going to be inspected
 var treeConf = {
   js: {
-    globs: ['**/*/!(template).js'],
-    output: 'app.js',
-    groups: null
+    globs: ['*/!(templates)/!(template).js'],
+    label: 'app.js',
+    foamtree: []
   },
   template: {
     globs: ['**/*/*.hbs'],
-    output: 'app.js',
-    groups: null
+    label: 'app.js',
+    foamtree: []
+  },
+  css: {
+    globs: ['**/*/*.(css|scss)'],
+    label: 'app.css',
+    foamtree: []
   }
 };
 
@@ -48,32 +54,22 @@ module.exports = {
   },
 
   treeForPublic: function(tree) {
-    return new Funnel('public');
-  },
-
-  treeForApp: function(tree) {
-    return tree;
-  },
-
-  treeForTest: function(tree) {
-    return tree;
+    debug('creating public tree');
+    return new UnwatchedTree('public');
   },
 
   _readTree: function(type, dir) {
     var config = treeConf[type];
 
-    // console.log('_readTree', type, dir, config);
+    debug('reading', type, 'tree from', dir);
 
     if (config) {
       var files = walkSync.entries(dir, { globs: config.globs });
       var foamtree = toFoamtree(config.output, files);
-      // console.log('type:', type);
-      // console.log('files:', files.length);
-      // console.log(foamtree);
-      // console.log(JSON.stringify(toFoamtree(type, files)));
-      // console.log('#########################');
+      debug('number of files', files.length);
+      //debug(JSON.stringify(foamtree));
 
-      config.groups = foamtree;
+      config.foamtree = foamtree;
     }
 
     return dir;
@@ -84,6 +80,8 @@ module.exports = {
       return tree;
     }
 
+    debug('preprocessing', type, 'tree');
+
     var _readTree = this._readTree.bind(this, type);
 
     return {
@@ -91,6 +89,7 @@ module.exports = {
         return readTree(tree)
         .then(_readTree)
         .catch(function(err) {
+          debug('ERROR', err);
           console.log(err);
           throw err;
         });
@@ -111,20 +110,41 @@ module.exports = {
       return;
     }
 
+    debug('output ready', result.directory);
     var confs = Object.keys(treeConf);
+    debug('mapping trees', confs);
     var confArray = confs.map(function(key) {
-      return treeConf[key];
+      return {
+        label: treeConf[key].label,
+        groups: treeConf[key].foamtree.groups || []
+      };
     });
-    var output = unionBy(confArray, 'output');
-    var outputPath = path.join(this.app.project.root, this.foamtreeOptions.outputPath, foamtreePath, 'data.json');
-    var outputJson = JSON.stringify(output);
+    // Merge by same output file
+    debug('merging output files');
+    var output = {};
+    confArray.forEach(function(conf) {
+      if (output[conf.label]) {
+        // Merge foamtree
+        debug('merging foamtree', conf.label);
+        output[conf.label] = deepmerge(output[conf.label], conf);
+      } else {
+        debug('creating new foamtree', conf.label);
+        output[conf.label] = conf;
+      }
+    });
+    // To array
+    output = Object.keys(output).map(function(key) {
+      return output[key]
+    });
+    var outputPath = path.join(result.directory, foamtreePath, 'data.js');
+    debug('public assets path', outputPath);
+    var outputJson = 'data = JSON.parse(\'' + JSON.stringify(output) + '\')';
     //var indexFunnel = new Funnel('public', { include: ['foamtree.html'] });
 
-    console.log(outputJson);
+    // console.log(outputJson);
     // console.log(this.app.project.root);
     // console.log(Object.keys(this.app.project));
-
+    debug('writing output file');
     fs.writeFile(outputPath, outputJson);
-    //return mergeTrees([tree, indexFunnel], { overwrite: true });
   }
 };
