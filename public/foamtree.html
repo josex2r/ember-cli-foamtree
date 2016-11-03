@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Foamtree</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="./assets/foamtree/viewer.css">
+
+    <script src="node_modules/filesize.js"></script>
+    <script src="./assets/foamtree/carrotsearch.foamtree.asserts.js"></script>
+    <script src="./assets/foamtree/carrotsearch.foamtree.js"></script>
+    <script src="./assets/foamtree/tooltip.js"></script>
+    <script src="./assets/foamtree/viewer.js"></script>
+  </head>
+  <body>
+    yo!
+
+    <div id="treemap" class="treemap"></div>
+
+    <script>
+      window.foamtree = {
+            groups: [
+              { label: "Your", weight: 1.0 },
+              { label: "First", weight: 3.0 },
+              { label: "FoamTree", weight: 2.0 },
+              { label: "Visualization", weight: 4.0 }
+            ]
+          };
+    </script>
+  </body>
+</html>
