@@ -1,7 +1,7 @@
 {
   "name": "ember-cli-foamtree",
   "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "description": "Analyze your bundle with an interactive Voronoi map.",
   "directories": {
     "doc": "doc",
     "test": "tests"
