@@ -42,6 +42,7 @@
     "ember-resolver": "^2.0.3",
     "ember-welcome-page": "^1.0.1",
     "loader.js": "^4.0.1",
+    "lodash.flatten": "^4.4.0",
     "lodash.values": "^4.3.0",
     "walk-sync": "^0.3.1"
   },

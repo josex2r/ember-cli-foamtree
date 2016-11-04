@@ -7,13 +7,14 @@ var walkSync = require('walk-sync');
 var UnwatchedTree = require('broccoli-unwatched-tree');
 var deepmerge = require('deepmerge');
 var path = require('path');
+var flatten = require('lodash.flatten');
 var toFoamtree = require('./lib/to-foamtree');
 
 var ASSETS_PATH = '/assets/foamtree/';
 // Trees that are going to be inspected
 var TREE_CONF = {
   js: {
-    globs: ['*/!(templates)/!(template).js'],
+    globs: ['**/*.js'],
     label: 'app.js',
     foamtree: []
   },
@@ -65,7 +66,7 @@ module.exports = {
   /*
    * Wraps broccoli tree to read all it's files
    */
-  _readTree: function(type, dir) {
+  _readTree: function(type, tree, dir) {
     // Get tree config from constant object
     var config = TREE_CONF[type];
 
@@ -73,7 +74,9 @@ module.exports = {
     // Do nothing if no config is available
     if (config) {
       // Read all files in this tree
-      var files = walkSync.entries(dir, { globs: config.globs });
+      var files = flatten(tree.inputPaths.map(function(directory) {
+        return walkSync.entries(directory, { globs: config.globs });
+      }));
       // Make the nested object tree based in the "carrot foamtree" plugin input
       var foamtree = toFoamtree(config.label, files);
       debug('number of files', files.length);
@@ -102,7 +105,7 @@ module.exports = {
 
     debug('preprocessing', type, 'tree');
     // Bind arguments to pass it as a promise callback
-    var _readTree = this._readTree.bind(this, type);
+    var _readTree = this._readTree.bind(this, type, tree);
     // Wrap broccoli tree
     return {
       // Broccoli main function to override

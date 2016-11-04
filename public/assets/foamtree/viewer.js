@@ -5,16 +5,51 @@ window.addEventListener('load', function () {
 
   var treemap = new CarrotSearchFoamTree({
     id: 'treemap',
-    layout: 'squarified',
+    layout: 'ordered',
     stacking: 'flattened',
     maxGroupLevelsDrawn: Number.MAX_VALUE,
     maxGroupLabelLevelsDrawn: Number.MAX_VALUE,
+    relaxationInitializer: 'ordered',
+
+    // Increase the relaxation quality threshold a little for
+    // faster processing at the cost of slightly lower layout quality.
+    relaxationVisible: true,
+    relaxationMaxDuration: 2000,
+    relaxationQualityThreshold: 6,
+
+      // Remove restriction on the minimum group diameter, so that
+    // we can render as many diagram levels as possible.
+    groupMinDiameter: 0,
+
+    // Lower the minimum label font size a bit to show more labels.
+    groupLabelMinFontSize: 3,
+
+    // Lower the border radius a bit to fit more groups.
+    groupBorderWidth: 2,
+    groupInsetWidth: 3,
+    groupSelectionOutlineWidth: 1,
+
+    // Always draw group labels, this will make zooming more attractive.
+    wireframeLabelDrawing: "always",
+
+    // You can change how many levels of polygons and labels below
+    // each topmost closed group FoamTree will draw. Lower values will
+    // result in faster rendering, but also less detail "underneath" the closed groups.
+    //maxGroupLevelsDrawn: 4,
+    //maxGroupLabelLevelsDrawn: 3,
+
+    // Disable rounded corners, deeply-nested groups
+    // will look much better and render faster.
+    groupBorderRadius: 0,
+
+      // Lower the parent group opacity, so that lower-level groups show through.
+    parentFillOpacity: 0.5,
+
     groupLabelVerticalPadding: 0.2,
+    // Disable rollout and pullback animations, use simple fading
     rolloutDuration: 0,
     pullbackDuration: 0,
     fadeDuration: 0,
-    zoomMouseWheelDuration: 300,
-    openCloseDuration: 200,
     dataObject: {
       groups: window.data
     },
