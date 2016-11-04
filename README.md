@@ -5,7 +5,7 @@ Analyze your bundle with an interactive Voronoi map.
 Simply add this addon to your project `package.json` and run ember-cli.
 Then access to `http://localhost:4200/foamtree.html`:
 
-![ember-cli-foamtree](./map.png)
+![ember-cli-foamtree](https://github.com/josex2r/ember-cli-foamtree/raw/master/map.png)
 
 This addon is currently in developement so feel free to report bugs or submit a pull request :)
 
