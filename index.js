@@ -16,22 +16,22 @@ var ASSETS_PATH = '/assets/foamtree/';
 var TREE_CONF = {
   js: {
     globs: ['**/*.js'],
-    label: 'app.js',
+    label: 'js',
     foamtree: []
   },
   template: {
     globs: ['**/*/*.hbs'],
-    label: 'app.js',
+    label: 'js',
     foamtree: []
   },
   test: {
     globs: ['**/*-test.js'],
-    label: 'app.js',
+    label: 'js',
     foamtree: []
   },
   css: {
     globs: ['**/*.css'],
-    label: 'app.css',
+    label: 'css',
     foamtree: []
   }
 };
@@ -108,8 +108,10 @@ module.exports = {
   },
 
   preprocessTree: function(type, tree) {
+    var options = this.foamtreeOptions;
+
     // Do nothing if addon is diabled
-    if (!this.foamtreeOptions.enabled) {
+    if (!options.enabled) {
       return tree;
     }
 
@@ -143,14 +145,22 @@ module.exports = {
   },
 
   outputReady: function(result) {
+    var self = this;
+    var options = this.foamtreeOptions;
+
     // Do nothing if addon is diabled
-    if (!this.foamtreeOptions.enabled) {
+    if (!options.enabled) {
       return;
     }
 
     // Transform cache object to array
     var output = Object.keys(TREE_CACHE).map(function(key) {
-      return TREE_CACHE[key];
+      var config = TREE_CACHE[key];
+
+      // Set filename from project name
+      config.label = self.app.name + '.' + config.label;
+
+      return config;
     });
     // Construct output assets path
     var outputPath = path.join(result.directory, ASSETS_PATH, 'data.js');
@@ -159,6 +169,7 @@ module.exports = {
 
     debug('outputReady', 'public assets path', outputPath);
     debug('outputReady', 'writing output file');
+    // Write the data file in the tmp directory
     fs.writeFile(outputPath, outputJson);
   }
 };
