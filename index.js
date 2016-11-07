@@ -58,7 +58,7 @@ module.exports = {
   treeForPublic: function(tree) {
     var dirname = __dirname || path.resolve(path.dirname());
     dirname = path.join(dirname, 'public');
-    debug('creating public tree', dirname);
+    debug('treeForPublic', 'creating public tree', dirname);
     // Do not watch this tree because of reasons (a fs.writeFile
     // in the output directory will run a lot of rebuilds)
     var foamPublicTree = new UnwatchedTree(dirname);
@@ -75,7 +75,7 @@ module.exports = {
     // Get tree config from constant object
     var config = TREE_CONF[type];
 
-    debug('reading', type, 'tree from', dir);
+    debug('_readTree', 'reading', type, 'tree from', dir);
     // Do nothing if no config is available
     if (config) {
       // Read all files in this tree
@@ -84,16 +84,16 @@ module.exports = {
       }));
       // Make the nested object tree based in the "carrot foamtree" plugin input
       var foamtree = toFoamtree(config.label, files);
-      debug('number of files', files.length);
+      debug('_readTree', 'number of files', files.length);
       //debug(JSON.stringify(foamtree));
       // Persist the data somewhere, if the foamtree exist then deepmerge
       // all the tree, else just assign it
       if (TREE_CACHE[config.label]) {
-        debug('merging foamtree', config.label);
+        debug('_readTree', 'merging foamtree', config.label);
         // We only want to persist the "groups" property, the files tree
         TREE_CACHE[config.label] = deepmerge(TREE_CACHE[config.label], foamtree);
       } else {
-        debug('creating foamtree', config.label);
+        debug('_readTree', 'creating foamtree', config.label);
         TREE_CACHE[config.label] = foamtree;
       }
       config.foamtree = foamtree;
@@ -108,7 +108,7 @@ module.exports = {
       return tree;
     }
 
-    debug('preprocessing', type, 'tree');
+    debug('preprocessTree', 'preprocessing', type, 'tree');
     // Bind arguments to pass it as a promise callback
     var _readTree = this._readTree.bind(this, type, tree);
     // Wrap broccoli tree
@@ -121,7 +121,7 @@ module.exports = {
         .then(_readTree)
         // Log errors
         .catch(function(err) {
-          debug('ERROR', err);
+          debug('preprocessTree', 'ERROR', err);
           console.log(err);
           throw err;
         });
@@ -152,8 +152,8 @@ module.exports = {
     // Declare global variable with the foamtree to import in the HTML file
     var outputJson = 'window.data = JSON.parse(\'' + JSON.stringify(output) + '\')';
 
-    debug('public assets path', outputPath);
-    debug('writing output file');
+    debug('outputReady', 'public assets path', outputPath);
+    debug('outputReady', 'writing output file');
     fs.writeFile(outputPath, outputJson);
   }
 };
