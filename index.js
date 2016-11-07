@@ -5,6 +5,7 @@ var debug = require('debug')('foamtree');
 var fs = require('fs');
 var walkSync = require('walk-sync');
 var UnwatchedTree = require('broccoli-unwatched-tree');
+var mergeTrees = require('broccoli-merge-trees');
 var deepmerge = require('deepmerge');
 var path = require('path');
 var flatten = require('lodash.flatten');
@@ -60,7 +61,11 @@ module.exports = {
     debug('creating public tree', dirname);
     // Do not watch this tree because of reasons (a fs.writeFile
     // in the output directory will run a lot of rebuilds)
-    return new UnwatchedTree(dirname);
+    var foamPublicTree = new UnwatchedTree(dirname);
+    // Merge trees to prevent a symlink between the public & the tmp dirname
+    return mergeTrees([foamPublicTree, tree], {
+      overwrite: true
+    });
   },
 
   /*
