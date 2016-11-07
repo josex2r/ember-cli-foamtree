@@ -23,11 +23,6 @@ var TREE_CONF = {
     globs: ['**/*/*.hbs'],
     label: 'app.js',
     foamtree: []
-  },
-  css: {
-    globs: ['**/*/*.(css|scss)'],
-    label: 'app.css',
-    foamtree: []
   }
 };
 var TREE_CACHE = {};
