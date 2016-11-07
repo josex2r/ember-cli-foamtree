@@ -25,8 +25,13 @@ var TREE_CONF = {
     foamtree: []
   },
   test: {
-    globs: ['**/*/*.js'],
+    globs: ['**/*-test.js'],
     label: 'app.js',
+    foamtree: []
+  },
+  css: {
+    globs: ['**/*.css'],
+    label: 'app.css',
     foamtree: []
   }
 };
